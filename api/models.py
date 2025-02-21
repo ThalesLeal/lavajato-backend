@@ -1,13 +1,12 @@
 # core/models.py
 from django.db import models
-from django.contrib.auth.models import User
 import uuid
 from django.contrib.auth.hashers import make_password, check_password
 
 class Cliente(models.Model):
     email = models.EmailField(unique=True)
     nome = models.CharField(max_length=80)
-    senha = models.CharField(max_length=128)  # senha armazenada com hash
+    senha = models.CharField(max_length=128)  # Senha armazenada com hash
     telefone = models.CharField(max_length=20, blank=True, null=True)
     data_cadastro = models.DateTimeField(auto_now_add=True)
 
@@ -30,13 +29,11 @@ class ClienteToken(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.key:
-            # Gera um token aleatório usando uuid4 (hexadecimal)
             self.key = uuid.uuid4().hex
         return super().save(*args, **kwargs)
 
     def __str__(self):
         return self.key
-
 
 class Lavagem(models.Model):
     nome = models.CharField(max_length=100)
@@ -64,7 +61,8 @@ class Vaga(models.Model):
         return f"{self.data} - {self.hora_inicio} até {self.hora_fim}"
 
 class Agendamento(models.Model):
-    cliente = models.ForeignKey(User, on_delete=models.CASCADE)
+    # Agora, o campo cliente faz referência ao modelo personalizado Cliente
+    cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE)
     lavagem = models.ForeignKey(Lavagem, on_delete=models.CASCADE)
     extras = models.ManyToManyField(Extra, blank=True)
     data_agendamento = models.DateField()
@@ -80,4 +78,4 @@ class Agendamento(models.Model):
     )
 
     def __str__(self):
-        return f"{self.cliente.username} - {self.data_agendamento} {self.horario}"
+        return f"{self.cliente.nome} - {self.data_agendamento} {self.horario}"

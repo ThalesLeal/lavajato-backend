@@ -28,6 +28,7 @@ def register_cliente(request):
         return Response({"detail": "Email já cadastrado."},
                         status=status.HTTP_400_BAD_REQUEST)
     
+    # Cria o Cliente e seta a senha
     cliente = Cliente(email=email, nome=nome, telefone=telefone)
     cliente.set_password(password)
     cliente.save()
@@ -35,60 +36,59 @@ def register_cliente(request):
     return Response({"detail": "Cliente registrado com sucesso."},
                     status=status.HTTP_201_CREATED)
 
+
+# api/auth_views.py
 @api_view(['POST'])
 def login_cliente(request):
-    """
-    Autentica o Cliente.
-    Espera um JSON com:
-    {
-      "email": "cliente@example.com",
-      "password": "senha123"
-    }
-    Retorna um token se as credenciais estiverem corretas.
-    """
     email = request.data.get('email')
     password = request.data.get('password')
     
     try:
         cliente = Cliente.objects.get(email=email)
     except Cliente.DoesNotExist:
-        return Response({"detail": "Credenciais inválidas."},
-                        status=status.HTTP_401_UNAUTHORIZED)
+        return Response({"detail": "Credenciais inválidas."}, status=401)
     
     if cliente.check_password(password):
-        token_obj, created = ClienteToken.objects.get_or_create(cliente=cliente)
         return Response({
-            "token": token_obj.key,
+            "id": cliente.id,
             "email": cliente.email,
-            "nome": cliente.nome,
-            "telefone": cliente.telefone
-        }, status=status.HTTP_200_OK)
+            "nome": cliente.nome
+            # etc...
+        }, status=200)
     else:
-        return Response({"detail": "Credenciais inválidas."},
-                        status=status.HTTP_401_UNAUTHORIZED)
+        return Response({"detail": "Credenciais inválidas."}, status=401)
 
 @api_view(['GET'])
-def get_cliente_profile(request):
+def get_cliente_profile_by_id(request, id):
     """
-    Retorna os dados do Cliente logado.
-    É necessário enviar o token no cabeçalho:
-    Authorization: Token <seu_token>
+    Retorna os dados do Cliente com base no id passado na URL.
+    Exemplo de URL: /api/auth/profile/1/
     """
-    auth_header = request.headers.get('Authorization')
-    if not auth_header or not auth_header.startswith("Token "):
-        return Response({"detail": "Token não fornecido."},
-                        status=status.HTTP_401_UNAUTHORIZED)
-    
-    token_key = auth_header.split(" ")[1]
     try:
-        token_obj = ClienteToken.objects.get(key=token_key)
-    except ClienteToken.DoesNotExist:
-        return Response({"detail": "Token inválido."},
-                        status=status.HTTP_401_UNAUTHORIZED)
+        cliente = Cliente.objects.get(id=id)
+    except Cliente.DoesNotExist:
+        return Response({"detail": "Cliente não encontrado."}, status=status.HTTP_404_NOT_FOUND)
     
-    cliente = token_obj.cliente
     return Response({
+        "id": cliente.id,
         "email": cliente.email,
         "nome": cliente.nome,
-        "telefone": cliente.telefone
+        "telefone": cliente.telefone,
+        "data_cadastro": cliente.data_cadastro
     }, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+def get_cliente_profile_by_id(request, id):
+    try:
+        cliente = Cliente.objects.get(id=id)
+    except Cliente.DoesNotExist:
+        return Response({"detail": "Cliente não encontrado."}, status=404)
+    
+    return Response({
+        "id": cliente.id,
+        "nome": cliente.nome,
+        "email": cliente.email,
+        "telefone": cliente.telefone,
+        "data_cadastro": cliente.data_cadastro
+    }, status=200)
