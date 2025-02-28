@@ -46,11 +46,12 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',  # para usar TokenAuthentication
     'api',
     'corsheaders',
+    'django_extensions',
 ]
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.TokenAuthentication',
-    ]
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
 }
 
 MIDDLEWARE = [
@@ -86,6 +87,9 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 
 CORS_ALLOW_ALL_ORIGINS = True
+
+AUTH_USER_MODEL = 'api.Cliente'
+
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:8080",
@@ -137,10 +141,6 @@ TIME_ZONE = 'America/Sao_Paulo'
 USE_I18N = True
 USE_L10N = True
 USE_TZ = True
-
-STATIC_URL = '/static/'
-
-
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/

@@ -1,6 +1,8 @@
 # core/serializers.py
 from rest_framework import serializers
 from .models import Lavagem, Extra, Vaga, Agendamento
+# api/auth/serializers.py
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 class LavagemSerializer(serializers.ModelSerializer):
     class Meta:
@@ -66,3 +68,10 @@ class AgendamentoSerializer(serializers.ModelSerializer):
         if extras:
             agendamento.extras.set(extras)
         return agendamento
+    
+class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+    def validate(self, attrs):
+        # Substitui o campo "username" pelo "email"
+        # Assim, o usuário pode enviar "email" no corpo da requisição.
+        attrs['username'] = attrs.get('email')
+        return super().validate(attrs)

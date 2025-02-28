@@ -3,12 +3,23 @@ from django.db import models
 import uuid
 from django.contrib.auth.hashers import make_password, check_password
 
+class ClienteManager(models.Manager):
+    def get_by_natural_key(self, email):
+        return self.get(email=email)
+
 class Cliente(models.Model):
     email = models.EmailField(unique=True)
     nome = models.CharField(max_length=80)
     senha = models.CharField(max_length=128)  # Senha armazenada com hash
     telefone = models.CharField(max_length=20, blank=True, null=True)
     data_cadastro = models.DateTimeField(auto_now_add=True)
+    is_active = models.BooleanField(default=True)
+
+    # Atributos esperados pelo sistema de autenticação
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['nome']
+
+    objects = ClienteManager()
 
     def set_password(self, raw_password):
         self.senha = make_password(raw_password)
@@ -19,12 +30,20 @@ class Cliente(models.Model):
     def __str__(self):
         return self.email
 
+    @property
+    def is_anonymous(self):
+        return False
+
+    @property
+    def is_authenticated(self):
+        return True
+
 class ClienteToken(models.Model):
     """
     Modelo simples para armazenar um token associado a um Cliente.
     """
     key = models.CharField(max_length=40, primary_key=True, editable=False)
-    cliente = models.OneToOneField(Cliente, related_name='auth_token', on_delete=models.CASCADE)
+    cliente = models.OneToOneField(Cliente, related_name='cliente_token', on_delete=models.CASCADE)
     created = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):
@@ -61,7 +80,7 @@ class Vaga(models.Model):
         return f"{self.data} - {self.hora_inicio} até {self.hora_fim}"
 
 class Agendamento(models.Model):
-    # Agora, o campo cliente faz referência ao modelo personalizado Cliente
+    # O campo cliente faz referência ao nosso modelo personalizado Cliente
     cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE)
     lavagem = models.ForeignKey(Lavagem, on_delete=models.CASCADE)
     extras = models.ManyToManyField(Extra, blank=True)
